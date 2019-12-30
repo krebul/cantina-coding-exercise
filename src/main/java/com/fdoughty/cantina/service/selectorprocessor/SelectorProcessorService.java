@@ -32,6 +32,8 @@ public class SelectorProcessorService
 	
 	public List<String> searchSystemView(String selector, JsonNode config) throws Exception
 	{
+		if (!selector.matches("^[a-zA-Z0-9_\\.\\#]*$"))
+			throw new Exception("Invalid Selector: " + selector);
 		Selector s = retrieveSelectorsFromString(selector);
 		return findNodeFromView(config, s, null);
 	}
@@ -61,12 +63,21 @@ public class SelectorProcessorService
 			else
 				selector = inputStr; 
 				
-			if (findSelectorType(selector) == SelectorType.CLASS) 
+			if (findSelectorType(selector) == SelectorType.CLASS) {
 				s.setClazz(selector);
-			else if (findSelectorType(selector) == SelectorType.IDENTIFIER)
+				if (selector.length() <= 0)
+					throw new Exception("Invalid selector: " + selector);
+			}
+			else if (findSelectorType(selector) == SelectorType.IDENTIFIER) {
 				s.setIdentifier(selector.substring(1));
-			else if (findSelectorType(selector) == SelectorType.CLASSNAME)
+				if (selector.length() <= 1)
+					throw new Exception("Invalid selector: " + selector);
+			}
+			else if (findSelectorType(selector) == SelectorType.CLASSNAME) {
 				s.setClassName(selector.substring(1));
+				if (selector.length() <= 1)
+					throw new Exception("Invalid selector: " + selector);
+			}
 				
 			if (modifier.equals(""))
 				break;

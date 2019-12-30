@@ -80,7 +80,7 @@ public class SelectorProcessorService
 	 * Output: Selector object containing data parsed from selector string
 	 */
 	private SelectorType findSelectorType(String selectorStr) throws Exception {
-		//logger.debug("processing selector [{}]", selectorStr);
+		logger.debug("Processing selector [{}]", selectorStr);
 		
 		
 		// figure out the type of selector based on the first character:
@@ -98,16 +98,19 @@ public class SelectorProcessorService
 		
 	}
 	
+	/* findNodeFromView
+	 * Traverse the Json tree in search for nodes matching the selector
+	 */
 	private List<String> findNodeFromView(JsonNode rootNode, Selector selector, String path) throws Exception {
 		List<String> results = new ArrayList<>();
 		
 		if (path == null)
 			path = "/";
 		
-		//logger.debug("Searching for node [{}] at [{}]", selector.toString(), path);
+		logger.debug("Searching for node [{}] at [{}]", selector.toString(), path);
 		// Check if this node matches the selector
 		if (isMatch(rootNode, selector)) {
-			results.add(path);
+			results.add(path + selector.toString());
 		}
 		
 		
@@ -129,6 +132,7 @@ public class SelectorProcessorService
 		return results;
 	}
 	
+	
 	private boolean isMatch(JsonNode node, Selector selector) {
 		String classStr = "";
 		String identifierStr = "";
@@ -139,8 +143,8 @@ public class SelectorProcessorService
 		if (!node.path("identifier").isMissingNode())
 			identifierStr = node.path("identifier").textValue();
 		
-		//logger.debug("Selector Class [{}], Node Class [{}]", selector.getClazz(), classStr);
-		//logger.debug("Selector Identifier [{}], Node Identifier [{}]", selector.getIdentifier(), identifierStr);
+		logger.debug("Selector Class [{}], Node Class [{}]", selector.getClazz(), classStr);
+		logger.debug("Selector Identifier [{}], Node Identifier [{}]", selector.getIdentifier(), identifierStr);
 		
 		if (selector.getClassName() != null) {
 			if (node.path("classNames").isMissingNode())

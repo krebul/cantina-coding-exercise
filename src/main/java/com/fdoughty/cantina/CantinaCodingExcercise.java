@@ -31,28 +31,33 @@ public class CantinaCodingExcercise
     {
     	svc = SelectorProcessorService.getInstance();
         System.out.println( FILE_URL );
+        JsonNode rootNode = null;
         Scanner scanner = new Scanner(System.in);
         try
 		{
-        	JsonNode rootNode = loadViewData();
-        	
-        	while (true) {
-				
-        		System.out.println("Please enter a selector.");
-				String selectorStr = scanner.next();
-				List<String> results = svc.searchSystemView(selectorStr, rootNode);
-				for (String result : results) {
-					logger.info(result);
-				}
-				logger.info("{} result(s) found.", results.size());
-        	}
-        	
+        	rootNode = loadViewData();
 		}
 		catch (Exception e)
 		{
 			e.printStackTrace();
 		}
-        scanner.close();
+        while (true) {
+				
+        	System.out.println("Please enter a selector.");
+			String selectorStr = scanner.next();
+			try
+			{
+				List<String> results = svc.searchSystemView(selectorStr, rootNode);
+				for (String result : results) {
+					logger.info(result);
+				}
+				logger.info("{} result(s) found.", results.size());
+			}
+			catch (Exception e) {
+				System.out.println("Error performing search: " + e.getMessage());
+			}
+        }
+
 		
     }
 

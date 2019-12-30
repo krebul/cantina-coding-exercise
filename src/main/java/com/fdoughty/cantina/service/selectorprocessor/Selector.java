@@ -3,6 +3,10 @@ package com.fdoughty.cantina.service.selectorprocessor;
 
 public class Selector
 {
+	public enum SelectorType{
+		CLASS, CLASSNAME, IDENTIFIER;
+	}
+	
 	private String clazz;
 	private String className;
 	private String identifier;

@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fdoughty.cantina.service.selectorprocessor.Selector.SelectorType;
 
 
 
@@ -29,34 +30,75 @@ public class SelectorProcessorService
 		return singleton;
 	}
 	
+	public List<String> searchSystemView(String selector, JsonNode config) throws Exception
+	{
+		Selector s = retrieveSelectorsFromString(selector);
+		return findNodeFromView(config, s, null);
+	}
+	
+	/* retrieveSelectorsFromString
+	 * Description: Take a selector string and break it down into it's component selectors.
+	 * Ex: CvarSelect#textureMode will be broken up into two selectors: CvarSelect and #textureMode
+	 */
+	public Selector retrieveSelectorsFromString(String inputStr) throws Exception {
+		Selector s = new Selector();
+		if (inputStr == null)
+			throw new Exception("Invalid selector: Must not be NULL");
+		
+		while (true) {
+			String modifier = "";
+			String selector = "";
+			if (inputStr.indexOf(".") > 0 || inputStr.indexOf("#") > 0) {
+				if (inputStr.indexOf(".") > 0)
+					modifier = ".";
+				if (inputStr.indexOf("#") > 0)
+					if (inputStr.indexOf(".") <= 0 || inputStr.indexOf("#") < inputStr.indexOf("."))
+					modifier = "#";
+			
+				selector = inputStr.substring(0, inputStr.indexOf(modifier));
+				inputStr = inputStr.substring(inputStr.indexOf(modifier));
+			}
+			else
+				selector = inputStr; 
+				
+			if (findSelectorType(selector) == SelectorType.CLASS) 
+				s.setClazz(selector);
+			else if (findSelectorType(selector) == SelectorType.IDENTIFIER)
+				s.setIdentifier(selector.substring(1));
+			else if (findSelectorType(selector) == SelectorType.CLASSNAME)
+				s.setClassName(selector.substring(1));
+				
+			if (modifier.equals(""))
+				break;
+		}
+		return s;
+		
+	}
+	
 	/* parseSelector
 	 * Input: String containing search selector
 	 * Output: Selector object containing data parsed from selector string
 	 */
-	public Selector parseSelector(String selectorStr) throws Exception {
-		Selector selector = new Selector();
-		logger.debug("processing selector [{}]", selectorStr);
-		if (selectorStr == null || selectorStr.length() <= 0)
-			throw new Exception("Invalid Selector: " + selectorStr);
+	private SelectorType findSelectorType(String selectorStr) throws Exception {
+		//logger.debug("processing selector [{}]", selectorStr);
+		
 		
 		// figure out the type of selector based on the first character:
 		// "selector" = class
 		// ".selector" = className
 		// "#selector" = identifier
 		if (selectorStr.matches("^[a-zA-Z0-9_]*$"))
-			selector.setClazz(selectorStr);
+			return SelectorType.CLASS;
 		else if (selectorStr.matches("^\\..*$"))
-			selector.setClassName(selectorStr.substring(1));
+			return SelectorType.CLASSNAME;
 		else if (selectorStr.matches("^\\#.*$"))
-			selector.setIdentifier(selectorStr.substring(1));
+			return SelectorType.IDENTIFIER;
 		else
 			throw new Exception("Invalid Selector: " + selectorStr);
 		
-		
-		return selector;
 	}
 	
-	public List<String> findNodeFromView(JsonNode rootNode, Selector selector, String path) throws Exception {
+	private List<String> findNodeFromView(JsonNode rootNode, Selector selector, String path) throws Exception {
 		List<String> results = new ArrayList<>();
 		
 		if (path == null)

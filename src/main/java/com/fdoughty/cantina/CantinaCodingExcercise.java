@@ -14,7 +14,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import com.fdoughty.cantina.service.selectorprocessor.Selector;
 import com.fdoughty.cantina.service.selectorprocessor.SelectorProcessorService;
 
 /**
@@ -41,8 +40,7 @@ public class CantinaCodingExcercise
 				
         		System.out.println("Please enter a selector.");
 				String selectorStr = scanner.next();
-				Selector selector = svc.parseSelector(selectorStr);
-				List<String> results = svc.findNodeFromView(rootNode, selector, null);
+				List<String> results = svc.searchSystemView(selectorStr, rootNode);
 				for (String result : results) {
 					logger.info(result);
 				}

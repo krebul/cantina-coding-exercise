@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fdoughty.cantina.service.selectorprocessor.Selector.SelectorType;
+
 
 
 public class SelectorProcessorService
@@ -44,70 +44,32 @@ public class SelectorProcessorService
 		// ".selector" = className
 		// "#selector" = identifier
 		if (selectorStr.matches("^[a-zA-Z0-9_]*$"))
-		{
-			selector.setType(SelectorType.CLASS);
-			selector.setSelectorName(selectorStr);
-		}
+			selector.setClazz(selectorStr);
 		else if (selectorStr.matches("^\\..*$"))
-		{
-			selector.setType(SelectorType.CLASSNAME);
-			selector.setSelectorName(selectorStr.substring(1));
-		}
+			selector.setClassName(selectorStr.substring(1));
 		else if (selectorStr.matches("^\\#.*$"))
-		{
-			selector.setType(SelectorType.IDENTIFIER);
-			selector.setSelectorName(selectorStr.substring(1));
-		}
+			selector.setIdentifier(selectorStr.substring(1));
 		else
 			throw new Exception("Invalid Selector: " + selectorStr);
 		
-		logger.debug("SelectorType [{}]", selector.getType());
-		logger.debug("SelectorName [{}]", selector.getSelectorName());
 		
 		return selector;
 	}
 	
 	public List<String> findNodeFromView(JsonNode rootNode, Selector selector, String path) throws Exception {
 		List<String> results = new ArrayList<>();
-		JsonNode theNode = null;
+		
 		if (path == null)
 			path = "/";
 		
-		//logger.debug("Searching for node [{}] at [{}]", selector.getSelectorName(), path);
-		switch (selector.getType()) {
-			case CLASS:
-				if (!rootNode.path("class").isMissingNode()) {
-					if (rootNode.path("class").textValue().equalsIgnoreCase(selector.getSelectorName())) {
-						results.add(path + rootNode.path("class").textValue());
-						
-					}
-				}
-				break;
-			case CLASSNAME:
-				if (!rootNode.path("classNames").isMissingNode()) {
-					ArrayNode classArr = (ArrayNode) rootNode.path("classNames");
-					if (classArr != null) {
-						for (int index = 0; index < classArr.size(); index++)
-						{
-							if (classArr.get(index).textValue().equalsIgnoreCase(selector.getSelectorName()))
-								results.add(path + "." + classArr.get(index).textValue());
-						}
-						
-					}
-				}
-				break;
-			case IDENTIFIER:
-				if (!rootNode.path("identifier").isMissingNode()) {
-					if (rootNode.path("identifier").textValue().equalsIgnoreCase(selector.getSelectorName())) {
-						results.add(path + "#" + rootNode.path("identifier").textValue());
-						
-					}
-				}
-				break;
-			default:
-				throw new Exception("Unknown Selector Type: " + selector.getType());
+		//logger.debug("Searching for node [{}] at [{}]", selector.toString(), path);
+		// Check if this node matches the selector
+		if (isMatch(rootNode, selector)) {
+			results.add(path);
 		}
 		
+		
+		// Iterate through all this node's children, and check them as well
 		Iterator<Entry<String, JsonNode>> i = rootNode.fields();
 		while (i.hasNext()) {
 			Entry<String, JsonNode> entry = i.next();
@@ -123,5 +85,46 @@ public class SelectorProcessorService
 			}
 		}
 		return results;
+	}
+	
+	private boolean isMatch(JsonNode node, Selector selector) {
+		String classStr = "";
+		String identifierStr = "";
+		boolean match = true;
+		
+		if (!node.path("class").isMissingNode())
+			classStr = node.path("class").textValue();
+		if (!node.path("identifier").isMissingNode())
+			identifierStr = node.path("identifier").textValue();
+		
+		//logger.debug("Selector Class [{}], Node Class [{}]", selector.getClazz(), classStr);
+		//logger.debug("Selector Identifier [{}], Node Identifier [{}]", selector.getIdentifier(), identifierStr);
+		
+		if (selector.getClassName() != null) {
+			if (node.path("classNames").isMissingNode())
+				match = false;
+			else
+			{
+				ArrayNode classArr = (ArrayNode) node.path("classNames");
+				if (classArr != null) {
+					int index; 
+					for (index = 0; index < classArr.size(); index++)
+					{
+						if (classArr.get(index).textValue().equalsIgnoreCase(selector.getClassName()))
+							break;
+					}
+					if (index >= classArr.size())
+						match = false;
+				}
+			}
+		}
+		
+		if (selector.getClazz() != null && !classStr.equalsIgnoreCase(selector.getClazz()))
+			match = false;
+		if (selector.getIdentifier() != null && !identifierStr.equalsIgnoreCase(selector.getIdentifier()))
+			match = false;
+	
+		
+		return match;
 	}
 }

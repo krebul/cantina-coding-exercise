@@ -40,7 +40,7 @@ public class CantinaCodingExcerciseTest
         return new TestSuite( CantinaCodingExcerciseTest.class );
     }
     
-    @Override
+    
     protected void setUp() throws Exception
     {
     	ObjectMapper mapper = new ObjectMapper();
